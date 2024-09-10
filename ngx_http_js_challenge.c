@@ -153,28 +153,11 @@ static char *ngx_http_js_challenge_merge_loc_conf(ngx_conf_t *cf, void *parent, 
     ngx_conf_merge_str_value(conf->html_path, prev->html_path, NULL)
     ngx_conf_merge_str_value(conf->title, prev->title, DEFAULT_TITLE)
 
-    ngx_flag_t is_enabled = conf->enabled;
-
-    // If a variable name was passed instead of a flag
     if (conf->enabled_variable_name.len > 0) {
-        ngx_str_t variable_value;
-
-        // Get the value of the variable
-        ngx_uint_t key = ngx_hash_strlow(conf->enabled_variable_name.data, conf->enabled_variable_name.data, conf->enabled_variable_name.len);
-        ngx_http_variable_value_t *var = ngx_http_get_variable(r, &conf->enabled_variable_name, key);
-
-        if (var == NULL || var->not_found) {
-            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "variable not found or empty");
-            return NGX_CONF_ERROR;
-        }
-
-        variable_value.data = var->data;
-        variable_value.len = var->len;
-
-        if (ngx_strncmp(variable_value.data, "on", variable_value.len) == 0) {
-            is_enabled = 1;
-        } else {
-            is_enabled = 0;
+        conf->enabled = NGX_CONF_UNSET;
+    } else {
+        if (conf->enabled == NGX_CONF_UNSET) {
+            conf->enabled = 0;
         }
     }
 
@@ -185,7 +168,7 @@ static char *ngx_http_js_challenge_merge_loc_conf(ngx_conf_t *cf, void *parent, 
 
     if (conf->html_path.data == NULL) {
         conf->html = NULL;
-    } else if (is_enabled) {
+    } else if (conf->enabled || conf->enabled_variable_name.len > 0) {
 
         // Read file in memory
         char path[PATH_MAX];
