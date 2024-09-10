@@ -351,8 +351,8 @@ static char *ngx_http_js_challenge_set_flag_or_variable(ngx_conf_t *cf, ngx_comm
     } else {
         // If the value starts with '$', treat it as a variable
         if (value[1].data[0] == '$') {
-            js_conf->variable_name.data = value[1].data + 1;
-            js_conf->variable_name.len = value[1].len - 1;
+            js_conf->enabled_variable_name.data = value[1].data + 1;
+            js_conf->enabled_variable_name.len = value[1].len - 1;
             js_conf->enabled = NGX_CONF_UNSET;  // Variable overrides the flag
         } else {
             ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
