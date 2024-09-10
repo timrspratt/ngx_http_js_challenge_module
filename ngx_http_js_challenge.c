@@ -377,22 +377,17 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
         ngx_http_variable_value_t *var = ngx_http_get_variable(r, &conf->enabled_variable_name, key);
 
         if (var == NULL || var->not_found || var->len == 0) {
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "js_challenge: variable not found or empty");
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[ js challenge log ] variable not found or empty");
             return NGX_DECLINED;
         }
 
         variable_value.data = var->data;
         variable_value.len = var->len;
 
-        // Interpret variable value as "on" or "off"
-        if (ngx_strncmp(variable_value.data, "off", variable_value.len) == 0) {
-            is_enabled = 0;
-        } else if (ngx_strncmp(variable_value.data, "on", variable_value.len) == 0) {
+        if (ngx_strncmp(variable_value.data, "on", variable_value.len) == 0) {
             is_enabled = 1;
         } else {
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
-                          "js_challenge: invalid variable value, must be 'on' or 'off'");
-            return NGX_DECLINED;
+            is_enabled = 0;
         }
     }
 
