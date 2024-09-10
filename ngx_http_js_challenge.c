@@ -374,7 +374,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
         ngx_str_t variable_value;
 
         // Get the value of the variable
-        ngx_uint_t key = ngx_hash_strlow(conf->enabled_variable_name.data, conf->enabled_variable_name.len);
+        ngx_uint_t key = ngx_hash_strlow(conf->enabled_variable_name.data, conf->enabled_variable_name.data, conf->enabled_variable_name.len);
         ngx_http_variable_value_t *var = ngx_http_get_variable(r, &conf->enabled_variable_name, key);
 
         if (var == NULL || var->not_found || var->len == 0) {
