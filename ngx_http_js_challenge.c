@@ -367,7 +367,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
     ngx_http_js_challenge_loc_conf_t *conf = ngx_http_get_module_loc_conf(r, ngx_http_js_challenge_module);
 
     ngx_flag_t is_enabled = conf->enabled;
-ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, conf->enabled_variable_name.len)
+ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, conf->enabled_variable_name.len);
     // If a variable name was passed instead of a flag
     if (conf->enabled_variable_name.len > 0) {
         ngx_str_t variable_value;
