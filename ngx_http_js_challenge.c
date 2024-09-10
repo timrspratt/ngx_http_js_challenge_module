@@ -372,7 +372,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
     // If a variable name was passed instead of a flag
     if (conf->enabled_variable_name.len > 0) {
         ngx_str_t variable_value;
-
+ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "2");
         // Get the value of the variable
         ngx_uint_t key = ngx_hash_key(conf->enabled_variable_name.data, conf->enabled_variable_name.len);
         ngx_http_variable_value_t *var = ngx_http_get_variable(r, &conf->enabled_variable_name, key);
