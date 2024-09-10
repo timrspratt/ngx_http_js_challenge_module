@@ -148,6 +148,7 @@ static char *ngx_http_js_challenge_merge_loc_conf(ngx_conf_t *cf, void *parent, 
 
     ngx_conf_merge_uint_value(conf->bucket_duration, prev->bucket_duration, 3600)
     ngx_conf_merge_value(conf->enabled, prev->enabled, 0)
+    ngx_conf_merge_str_value(conf->enabled_variable_name, prev->enabled_variable_name, NULL)
     ngx_conf_merge_str_value(conf->secret, prev->secret, DEFAULT_SECRET)
     ngx_conf_merge_str_value(conf->html_path, prev->html_path, NULL)
     ngx_conf_merge_str_value(conf->title, prev->title, DEFAULT_TITLE)
@@ -367,7 +368,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
     ngx_http_js_challenge_loc_conf_t *conf = ngx_http_get_module_loc_conf(r, ngx_http_js_challenge_module);
 
     ngx_flag_t is_enabled = conf->enabled;
-ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, conf->enabled_variable_name.len);
+
     // If a variable name was passed instead of a flag
     if (conf->enabled_variable_name.len > 0) {
         ngx_str_t variable_value;
