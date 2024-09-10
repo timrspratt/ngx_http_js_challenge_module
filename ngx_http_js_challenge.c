@@ -164,8 +164,8 @@ static char *ngx_http_js_challenge_merge_loc_conf(ngx_conf_t *cf, void *parent, 
         ngx_http_variable_value_t *var = ngx_http_get_variable(r, &conf->enabled_variable_name, key);
 
         if (var == NULL || var->not_found) {
-            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[ js challenge log ] variable not found or empty");
-            return NGX_DECLINED;
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0, "variable not found or empty");
+            return NGX_CONF_ERROR;
         }
 
         variable_value.data = var->data;
