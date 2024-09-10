@@ -35,9 +35,12 @@ typedef struct {
     ngx_str_t html_path;
     ngx_str_t title;
     char *html;
+    ngx_str_t enabled_variable_name;
 } ngx_http_js_challenge_loc_conf_t;
 
 static ngx_int_t ngx_http_js_challenge(ngx_conf_t *cf);
+
+static char *ngx_http_js_challenge_set_flag_or_variable(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
 
 static void *ngx_http_js_challenge_create_loc_conf(ngx_conf_t *cf);
 
@@ -51,10 +54,10 @@ static ngx_command_t ngx_http_js_challenge_commands[] = {
 
         {
                 ngx_string("js_challenge"),
-                NGX_HTTP_LOC_CONF | NGX_HTTP_LIF_CONF | NGX_HTTP_SIF_CONF | NGX_HTTP_SRV_CONF | NGX_CONF_FLAG,
-                ngx_conf_set_flag_slot,
+                NGX_HTTP_LOC_CONF | NGX_HTTP_LIF_CONF | NGX_HTTP_SIF_CONF | NGX_HTTP_SRV_CONF | NGX_CONF_TAKE1,
+                ngx_http_js_challenge_set_flag_or_variable,
                 NGX_HTTP_LOC_CONF_OFFSET,
-                offsetof(ngx_http_js_challenge_loc_conf_t, enabled),
+                offsetof(ngx_http_js_challenge_loc_conf_t, enabled),  // Use for "on"/"off"
                 NULL
         },
         {
@@ -335,11 +338,65 @@ int get_cookie(ngx_http_request_t *r, ngx_str_t *name, ngx_str_t *value) {
     return -1;
 }
 
+static char *ngx_http_js_challenge_set_flag_or_variable(ngx_conf_t *cf, ngx_command_t *cmd, void *conf) {
+    ngx_http_js_challenge_loc_conf_t *js_conf = conf;
+    ngx_str_t *value = cf->args->elts;
+
+    // Check if the value is "on" or "off" (hardcoded flag)
+    if (ngx_strcmp(value[1].data, "on") == 0) {
+        js_conf->enabled = 1;
+    } else if (ngx_strcmp(value[1].data, "off") == 0) {
+        js_conf->enabled = 0;
+    } else {
+        // If the value starts with '$', treat it as a variable
+        if (value[1].data[0] == '$') {
+            js_conf->enabled_variable_name = value[1];
+            js_conf->enabled = NGX_CONF_UNSET;  // Variable overrides the flag
+        } else {
+            ngx_conf_log_error(NGX_LOG_EMERG, cf, 0,
+                "invalid value \"%V\" in js_challenge directive, must be \"on\", \"off\", or a variable", &value[1]);
+            return NGX_CONF_ERROR;
+        }
+    }
+
+    return NGX_CONF_OK;
+}
+
 static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
 
     ngx_http_js_challenge_loc_conf_t *conf = ngx_http_get_module_loc_conf(r, ngx_http_js_challenge_module);
 
-    if (!conf->enabled) {
+    ngx_flag_t is_enabled = conf->enabled;
+
+    // If a variable name was passed instead of a flag
+    if (conf->enabled_variable_name.len > 0) {
+        ngx_str_t variable_value;
+
+        // Get the value of the variable
+        ngx_uint_t key = ngx_hash_key(conf->enabled_variable_name.data, conf->enabled_variable_name.len);
+        ngx_http_variable_value_t *var = ngx_http_get_variable(r, &conf->enabled_variable_name, key);
+
+        if (var == NULL || var->not_found || var->len == 0) {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "js_challenge: variable not found or empty");
+            return NGX_DECLINED;
+        }
+
+        variable_value.data = var->data;
+        variable_value.len = var->len;
+
+        // Interpret variable value as "on" or "off"
+        if (ngx_strncmp(variable_value.data, "off", variable_value.len) == 0) {
+            is_enabled = 0;
+        } else if (ngx_strncmp(variable_value.data, "on", variable_value.len) == 0) {
+            is_enabled = 1;
+        } else {
+            ngx_log_error(NGX_LOG_ERR, r->connection->log, 0,
+                          "js_challenge: invalid variable value, must be 'on' or 'off'");
+            return NGX_DECLINED;
+        }
+    }
+
+    if (!is_enabled) {
         return NGX_DECLINED;
     }
 
