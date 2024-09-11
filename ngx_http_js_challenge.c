@@ -154,7 +154,7 @@ static char *ngx_http_js_challenge_merge_loc_conf(ngx_conf_t *cf, void *parent, 
     ngx_conf_merge_str_value(conf->html_path, prev->html_path, NULL)
     ngx_conf_merge_str_value(conf->title, prev->title, DEFAULT_TITLE)
 
-    if (conf->enabled_variable_name.len > 0) {
+    if (conf->enabled_variable_name.data != NULL && conf->enabled_variable_name.len > 0) {
         conf->enabled = NGX_CONF_UNSET;
     } else if (conf->enabled == NGX_CONF_UNSET) {
         conf->enabled = 0;
