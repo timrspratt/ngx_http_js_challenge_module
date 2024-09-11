@@ -36,11 +36,14 @@ typedef struct {
     ngx_str_t title;
     char *html;
     ngx_str_t enabled_variable_name;
+    ngx_flag_t challenge_served;
 } ngx_http_js_challenge_loc_conf_t;
 
 static ngx_int_t ngx_http_js_challenge(ngx_conf_t *cf);
 
 static char *ngx_http_js_challenge_set_flag_or_variable(ngx_conf_t *cf, ngx_command_t *cmd, void *conf);
+
+static ngx_int_t ngx_http_js_challenge_served_var(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data);
 
 static void *ngx_http_js_challenge_create_loc_conf(ngx_conf_t *cf);
 
@@ -95,6 +98,36 @@ static ngx_command_t ngx_http_js_challenge_commands[] = {
         ngx_null_command
 };
 
+static ngx_http_variable_t ngx_http_js_challenge_vars[] = {
+        {
+                ngx_string("js_challenge_served"),
+                NULL,
+                ngx_http_js_challenge_served_var,
+                0,
+                NGX_HTTP_VAR_CHANGEABLE,
+                0
+        },
+        ngx_http_null_variable
+};
+
+static ngx_int_t ngx_http_js_challenge_served_var(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data) {
+    ngx_http_js_challenge_loc_conf_t *conf = ngx_http_get_module_loc_conf(r, ngx_http_js_challenge_module);
+
+    if (conf->challenge_served) {
+        v->len = 1;
+        v->data = (u_char *) "1";
+    } else {
+        v->len = 1;
+        v->data = (u_char *) "0";
+    }
+
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    return NGX_OK;
+}
+
 /*
  * Module context
  */
@@ -138,6 +171,7 @@ static void *ngx_http_js_challenge_create_loc_conf(ngx_conf_t *cf) {
     conf->bucket_duration = NGX_CONF_UNSET_UINT;
     conf->enabled = NGX_CONF_UNSET;
     conf->enabled_variable_name = (ngx_str_t) {0, NULL};
+    conf->challenge_served = 0;
 
     return conf;
 }
@@ -416,6 +450,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
 
     if (ret < 0) {
          ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[ js challenge log ] sending challenge... ");
+         conf->challenge_served = 1;
          return serve_challenge(r, challenge, conf->html, conf->title);
     }
 
@@ -423,6 +458,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
 
     if (verify_response(response, challenge) != 0) {
         ngx_log_error(NGX_LOG_ERR, r->connection->log, 0, "[ js challenge log ] wrong/expired cookie (res=%s), sending challenge...", response.data);
+        conf->challenge_served = 1;
         return serve_challenge(r, challenge, conf->html, conf->title);
     }
 
@@ -434,7 +470,17 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
  * post configuration
  */
 static ngx_int_t ngx_http_js_challenge(ngx_conf_t *cf) {
+    ngx_http_variable_t *var;
 
+    for (var = ngx_http_js_challenge_vars; var->name.len; var++) {
+        ngx_http_variable_t *v = ngx_http_add_variable(cf, &var->name, var->flags);
+        if (v == NULL) {
+            return NGX_ERROR;
+        }
+        v->get_handler = var->get_handler;
+        v->data = var->data;
+    }
+        
     ngx_http_handler_pt *h;
     ngx_http_core_main_conf_t *main_conf = ngx_http_conf_get_module_main_conf(cf, ngx_http_core_module);
 
