@@ -110,24 +110,6 @@ static ngx_http_variable_t ngx_http_js_challenge_vars[] = {
         ngx_http_null_variable
 };
 
-static ngx_int_t ngx_http_js_challenge_served_var(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data) {
-    ngx_http_js_challenge_loc_conf_t *conf = ngx_http_get_module_loc_conf(r, ngx_http_js_challenge_module);
-
-    if (conf->challenge_served) {
-        v->len = 1;
-        v->data = (u_char *) "1";
-    } else {
-        v->len = 1;
-        v->data = (u_char *) "0";
-    }
-
-    v->valid = 1;
-    v->no_cacheable = 0;
-    v->not_found = 0;
-
-    return NGX_OK;
-}
-
 /*
  * Module context
  */
@@ -464,6 +446,24 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
 
     // Fallthrough next handler
     return NGX_DECLINED;
+}
+
+static ngx_int_t ngx_http_js_challenge_served_var(ngx_http_request_t *r, ngx_http_variable_value_t *v, uintptr_t data) {
+    ngx_http_js_challenge_loc_conf_t *conf = ngx_http_get_module_loc_conf(r, ngx_http_js_challenge_module);
+
+    if (conf->challenge_served) {
+        v->len = 1;
+        v->data = (u_char *) "1";
+    } else {
+        v->len = 1;
+        v->data = (u_char *) "0";
+    }
+
+    v->valid = 1;
+    v->no_cacheable = 0;
+    v->not_found = 0;
+
+    return NGX_OK;
 }
 
 /**
