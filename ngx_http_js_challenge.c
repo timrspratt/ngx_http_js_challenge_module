@@ -377,7 +377,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
     ngx_flag_t is_enabled = conf->enabled;
 
     // If a variable name was passed instead of a flag
-    if (conf->enabled_variable_name.len > 0 &&  && conf->enabled == NGX_CONF_UNSET) {
+    if (conf->enabled_variable_name.len > 0 && conf->enabled == NGX_CONF_UNSET) {
         ngx_str_t variable_value;
 
         // Get the value of the variable
