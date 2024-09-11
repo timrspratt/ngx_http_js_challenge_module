@@ -155,10 +155,8 @@ static char *ngx_http_js_challenge_merge_loc_conf(ngx_conf_t *cf, void *parent, 
 
     if (conf->enabled_variable_name.len > 0) {
         conf->enabled = NGX_CONF_UNSET;
-    } else {
-        if (conf->enabled == NGX_CONF_UNSET) {
-            conf->enabled = 0;
-        }
+    } else if (conf->enabled == NGX_CONF_UNSET) {
+        conf->enabled = 0;
     }
 
     if (conf->bucket_duration < 1) {
@@ -233,7 +231,7 @@ int serve_challenge(ngx_http_request_t *r, const char *challenge, const char *ht
     static const ngx_str_t content_type = ngx_string("text/html;charset=utf-8");
 
     if (html == NULL) {
-        html = "<h2>Set the <code>js_challenge_html /path/to/body.html;</code> directive to change this page.</h2>";
+        html = "<h2>Verifying browser...</h2>";
     }
 
     size_t size = snprintf((char *) buf, sizeof(buf), JS_SOLVER_TEMPLATE, title_c_str, challenge_c_str, html);
@@ -379,7 +377,7 @@ static ngx_int_t ngx_http_js_challenge_handler(ngx_http_request_t *r) {
     ngx_flag_t is_enabled = conf->enabled;
 
     // If a variable name was passed instead of a flag
-    if (conf->enabled_variable_name.len > 0) {
+    if (conf->enabled_variable_name.len > 0 &&  && conf->enabled == NGX_CONF_UNSET) {
         ngx_str_t variable_value;
 
         // Get the value of the variable
