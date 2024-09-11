@@ -137,7 +137,7 @@ static void *ngx_http_js_challenge_create_loc_conf(ngx_conf_t *cf) {
     conf->secret = (ngx_str_t) {0, NULL};
     conf->bucket_duration = NGX_CONF_UNSET_UINT;
     conf->enabled = NGX_CONF_UNSET;
-    conf->enabled_variable_name = NULL;
+    conf->enabled_variable_name = (ngx_str_t) {0, NULL};
 
     return conf;
 }
